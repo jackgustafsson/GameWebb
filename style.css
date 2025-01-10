@@ -1,12 +1,4 @@
-@CHARSET "UTF-8";
-@font-face {
-    font-family: typeWriter;
-    src: url(carbon.ttf);
-}
 
-h1{
-	font-family: typeWriter;
-}
 canvas#spaceCanvas{
 	background-color: black;
 }
