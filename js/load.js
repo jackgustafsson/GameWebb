@@ -13,6 +13,9 @@ let shotSound = new Audio('sound/fire.mp3');
 let keysDown = {};
 
 let canvas;
+/**
+ * @type {CanvasRenderingContext2D}
+ */
 let ctx;
 
 let ship, shot;
@@ -23,6 +26,10 @@ let gameOver = false;
 let then;
 
 let points = 0;
+let enemySpeed = 10;
+let enemiesToSpawn = 1
+let spawnCooldown = 5000;
+let lastSpawnTime = 0;
 
 // Initierar spelet, anropas vid onload
 function init(){
@@ -35,13 +42,13 @@ function init(){
 	ship = new Ship(265, 400, shipImg, 256);
 	shot = new Shot(ship.x + ship.img.width/2, 400, shotImg, 300);
 
-	enemyArray = new Array();
+	enemyArray = []; //new Array();
 
-	for(let x = 0; x < 8; x++){
+	/*for(let x = 0; x < 8; x++){
 		for(let y = 0; y < 3; y++){
 			enemyArray.push(new Enemy(x*65+20, y*50+60, enemyImg, 10));
 		}
-	}
+	}*/
 
 	then = Date.now();
 
@@ -138,32 +145,49 @@ function update (deltaTime) {
 	}
 
 	for(let i = 0; i < enemyArray.length; i++){
-		if(enemyArray[i].alive && enemyArray[i].y < 400){
-			enemyArray[i].y += enemyArray[i].speed * deltaTime;
+		let enemy = enemyArray[i];
+		if(enemy.alive && enemy.y < 400){
+			enemy.y += enemy.speed * deltaTime;
 
-			if(checkHit(enemyArray[i], shot)){
-				enemyArray[i].alive = false;
+			if(shot.action && checkHit(enemy, shot)){
+				enemy.alive = false;
 				shot.action = false;
 				shot.y = 0;
 				ship.shootEnabled = true;
 				points++;
 
-				if(points == 24){
-					gameOver = true;
+
+				//Ändra nedan till en switch case sats med if satser
+				if (points % 5 === 0 && points !== 0) {
+					enemySpeed = Math.min(enemySpeed + 5, 100); // Maxhastighet 100
 				}
+				if (points % 10 === 0 && points !== 0) {
+					enemiesToSpawn = Math.min(enemiesToSpawn + 1, 5); // Max 5 fiender åt gången
+					spawnCooldown = Math.min(spawnCooldown + 1000, 10000);
+				}
+
+
+				break;
 			}
 
-			if(checkHit(enemyArray[i], ship)){
+			if(checkHit(enemy, ship)){
 				gameOver = true;
 				ship.y = 451;
 			}
 		}
 
 		else{
-			if(enemyArray[i].y >= 400){
+			if(enemy.y >= 400){
 				gameOver = true;
 			}
 		}
+	}
+
+	enemyArray = enemyArray.filter(enemy => enemy.alive);
+
+	if(Date.now() - lastSpawnTime > spawnCooldown){
+		spawnEnemies(enemiesToSpawn);
+		lastSpawnTime = Date.now();
 	}
 
 	if(gameOver){
@@ -172,6 +196,27 @@ function update (deltaTime) {
 		ship.shootEnabled = true;
 	}
 
+}
+
+function spawnEnemies(count) {
+    for (let i = 0; i < count; i++) {
+        let overlap = true;
+        let x, y;
+        let attempts = 0; // Räknar försök för att undvika oändlig loop
+
+        while (overlap && attempts < 50) {
+            x = Math.random() * (canvas.width - 50);
+            y = -50; // Spawnar alltid från toppen
+            overlap = enemyArray.some(enemy => 
+                Math.abs(enemy.x - x) < 50 && Math.abs(enemy.y - y) < 50
+            );
+            attempts++;
+        }
+
+        if (attempts < 50) { // Endast lägg till om en giltig position hittas
+            enemyArray.push(new Enemy(x, y, enemyImg, enemySpeed));
+        }
+    }
 }
 
 /**  Avlosssar en missil om möjligt  */
@@ -194,11 +239,13 @@ function fire(){
  * @returns true 	vid krock
  */
 function checkHit(enemy, obj){
-	if(obj.x <= (enemy.x + enemy.img.width) && enemy.x <= (obj.x + obj.img.width) && obj.y <= (enemy.y + enemy.img.height) && enemy.y <= (obj.y + obj.img.height)){
-		return true;
-	}else{
-		return false;
-	}
+	if (!enemy || !obj) return false; // Kontrollera att objekten är definierade
+    return (
+        obj.x <= (enemy.x + enemy.img.width) &&
+        enemy.x <= (obj.x + obj.img.width) &&
+        obj.y <= (enemy.y + enemy.img.height) &&
+        enemy.y <= (obj.y + obj.img.height)
+    );
 }
 
 // Sparar undan en tangentryckning för bearbetning 
