@@ -26,7 +26,7 @@ let gameOver = false;
 let then;
 
 let points = 0;
-let enemySpeed = 10;
+let enemySpeed = 20;
 let enemiesToSpawn = 1
 let spawnCooldown = 5000;
 let lastSpawnTime = 0;
@@ -156,18 +156,39 @@ function update (deltaTime) {
 				ship.shootEnabled = true;
 				points++;
 
-
-				//Ändra nedan till en switch case sats med if satser
-				if (points % 5 === 0 && points !== 0) {
-					enemySpeed = Math.min(enemySpeed + 5, 100); // Maxhastighet 100
+				//Svårighetsgraden ökar ju mer poäng man får
+				if (points >= 100) {
+					enemySpeed = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+					enemiesToSpawn = Math.floor(Math.random() * 5) + 1;
+					spawnCooldown = 3000;
+				} else if (points >= 70) {
+					enemySpeed = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+					enemiesToSpawn = Math.floor(Math.random() * 4) + 1;
+					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
+				} else if (points >= 50) {
+					enemySpeed = Math.floor(Math.random() * (50 - 30 + 1)) + 30;
+					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
+					enemiesToSpawn = Math.floor(Math.random() * 4) + 1;
+				} else if (points >= 40) {
+					enemySpeed = Math.floor(Math.random() * (50 - 30 + 1)) + 30;
+					enemiesToSpawn = Math.floor(Math.random() * 3) + 1;
+					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
+				} else if (points >= 30) {
+					enemiesToSpawn = Math.floor(Math.random() * 3) + 1;
+					enemySpeed = Math.floor(Math.random() * (40 - 30 + 1)) + 30;
+					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
+				} else if (points >= 20) {
+					enemySpeed = Math.floor(Math.random() * (40 - 30 + 1)) + 30;
+					enemiesToSpawn = Math.floor(Math.random() * 2) + 1;
+				} else if (points >= 10) {
+					enemiesToSpawn = Math.floor(Math.random() * 2) + 1;
+					enemySpeed = Math.floor(Math.random() * (40 - 20 + 1)) + 20;
+				} else if (points >= 5) {
+					enemySpeed = Math.floor(Math.random() * (40 - 20 + 1)) + 20;
 				}
-				if (points % 10 === 0 && points !== 0) {
-					enemiesToSpawn = Math.min(enemiesToSpawn + 1, 5); // Max 5 fiender åt gången
-					spawnCooldown = Math.min(spawnCooldown + 1000, 10000);
-				}
 
-
-				break;
+				console.log(`Points: ${points}, Speed: ${enemySpeed}, EnemiesToSpawn: ${enemiesToSpawn}, Cooldown: ${spawnCooldown}`);
+	
 			}
 
 			if(checkHit(enemy, ship)){
