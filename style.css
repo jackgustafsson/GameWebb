@@ -1,4 +1,10 @@
+body{
+	background-color: grey;
 
+}
 canvas#spaceCanvas{
 	background-color: black;
+	border: solid green;
+	margin-left: 350px;
+	margin-top: 100px;
 }

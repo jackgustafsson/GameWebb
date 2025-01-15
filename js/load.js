@@ -31,46 +31,24 @@ let enemiesToSpawn = 1
 let spawnCooldown = 5000;
 let lastSpawnTime = 0;
 
+let gameState = "menu";
+
 // Initierar spelet, anropas vid onload
 function init(){
+	
 	document.addEventListener("keydown", keyDown);
 	document.addEventListener("keyup", keyUp);
 
 	canvas = document.getElementById('spaceCanvas');
 	ctx = canvas.getContext('2d');
 
-	ship = new Ship(265, 400, shipImg, 256);
-	shot = new Shot(ship.x + ship.img.width/2, 400, shotImg, 300);
-
-	enemyArray = []; //new Array();
-
-	/*for(let x = 0; x < 8; x++){
-		for(let y = 0; y < 3; y++){
-			enemyArray.push(new Enemy(x*65+20, y*50+60, enemyImg, 10));
-		}
-	}*/
+	canvas.addEventListener("click", handleMenuClick);
 
 	then = Date.now();
 
 	gameLoop();
 	
 } 
-
-//Spelloopen
-function gameLoop() {
-	let now = Date.now();
-	let delta = now - then;
-
-	update(delta/1000);
-	render();
-
-	then = now;
-	
-	// Bytt till requestAnimFrame istället för setInterval
-	requestAnimationFrame(function() {
-        gameLoop();
-      });
-}
 
 //  Ritar om canvas
 function render() {
@@ -79,42 +57,117 @@ function render() {
 	ctx.fillStyle = "black";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-	ctx.drawImage(ship.img, ship.x, ship.y);
-
-	if(shot.action == true){
-		ctx.drawImage(shot.img, shot.x, shot.y);
-	}
-
-	for(let i = 0; i < enemyArray.length; i++){
-		if(enemyArray[i].alive){
-			ctx.drawImage(enemyArray[i].img, enemyArray[i].x, enemyArray[i].y);
-		}
-	}
-
-	ctx.fillStyle = "yellow";
-	ctx.font = "14px Arial";
-	ctx.textAlign = "left";
-	ctx.textBaseline = "top";
-	ctx.fillText("Enemy Down: " + points, 12, 10);
-
-	if(gameOver){
-		ctx.fillStyle = "green";
-		ctx.font = "28px Arial";
-		ctx.textAlign = "center";
-		ctx.textBaseline = "top";
-		ctx.fillText("Game Over", 275, 180);
-	}
+	if (gameState === "menu") {
+        renderMenu();
+    } else if (gameState === "help") {
+        renderHelp();
+    } else if (gameState === "playing") {
+        renderGame();
+    } else if (gameState === "gameOver") {
+        renderGameOver();
+    }
 
 	ctx.restore();
 }
 
+function renderMenu() {
+    ctx.fillStyle = "white";
+    ctx.font = "24px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Space Shooter", canvas.width / 2, 100);
+    ctx.fillText("Start Game", canvas.width / 2, 250);
+    ctx.fillText("Help", canvas.width / 2, 300);
+    ctx.fillText("Exit", canvas.width / 2, 350);
+}
+
+function renderHelp() {
+    ctx.fillStyle = "white";
+    ctx.font = "18px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Use arrow keys to move and space to shoot.", canvas.width / 2, 150);
+    ctx.fillText("Avoid enemies and shoot them down.", canvas.width / 2, 200);
+    ctx.fillText("Click to return to menu.", canvas.width / 2, 300);
+}
+
+function renderGame() {
+
+
+    ctx.drawImage(ship.img, ship.x, ship.y);
+
+    if (shot.action) {
+        ctx.drawImage(shot.img, shot.x, shot.y);
+    }
+
+    for (let i = 0; i < enemyArray.length; i++) {
+        if (enemyArray[i].alive) {
+            ctx.drawImage(enemyArray[i].img, enemyArray[i].x, enemyArray[i].y);
+        }
+    }
+
+    ctx.fillStyle = "yellow";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText("Enemy Down: " + points, 12, 15);
+}
+
+function renderGameOver() {
+    ctx.fillStyle = "white";
+    ctx.font = "28px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over", canvas.width / 2, 100);
+    ctx.fillText("Your score: " + points, canvas.width / 2, 150);
+    ctx.fillText("Play Again", canvas.width / 2, 300);
+    ctx.fillText("Back to Main Menu", canvas.width / 2, 350);
+}
+
+// Hanterar menyval baserat på klick
+function handleMenuClick(event) {
+    let rect = canvas.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+
+    if (gameState === "menu") {
+        if (y > 230 && y < 270) {
+            startGame();
+        } else if (y > 270 && y < 330) {
+            gameState = "help";
+        } else if (y > 330 && y < 370) {
+            window.close();
+        }
+    } else if (gameState === "help") {
+        gameState = "menu";
+    } else if (gameState === "gameOver") {
+        if (y > 270 && y < 330) {
+            startGame();
+        } else if (y > 330 && y < 370) {
+            gameState = "menu";
+        }
+    }
+}
+
+// Startar spelet
+function startGame() {
+    gameState = "playing";
+    points = 0;
+    gameOver = false;
+	enemySpeed = 20;
+	enemiesToSpawn = 1;
+	spawnCooldown = 5000;
+	ship = new Ship(canvas.width/2, (canvas.height - 30), shipImg, 500);
+	shot = new Shot(ship.x + ship.img.width/2, 400, shotImg, 300);
+	enemyArray = []; 
+    lastSpawnTime = Date.now();
+}
 
 //Uppdaterar läget på figurernatoch kontrollerar krockar
 
 function update (deltaTime) {
-	if(gameOver){
-		return;
-	}
+	if (gameState !== "playing") return;
+
+    if (gameOver) {
+        gameState = "gameOver";
+        return;
+    }
 
 	if(32 in keysDown){  //Space
 		fire();
@@ -146,7 +199,7 @@ function update (deltaTime) {
 
 	for(let i = 0; i < enemyArray.length; i++){
 		let enemy = enemyArray[i];
-		if(enemy.alive && enemy.y < 400){
+		if(enemy.alive && enemy.y < (canvas.height - 30)){
 			enemy.y += enemy.speed * deltaTime;
 
 			if(shot.action && checkHit(enemy, shot)){
@@ -158,7 +211,7 @@ function update (deltaTime) {
 
 				//Svårighetsgraden ökar ju mer poäng man får
 				if (points >= 100) {
-					enemySpeed = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+					enemySpeed = Math.floor(Math.random() * (70 - 50 + 1)) + 40;
 					enemiesToSpawn = Math.floor(Math.random() * 5) + 1;
 					spawnCooldown = 3000;
 				} else if (points >= 70) {
@@ -166,23 +219,23 @@ function update (deltaTime) {
 					enemiesToSpawn = Math.floor(Math.random() * 4) + 1;
 					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
 				} else if (points >= 50) {
-					enemySpeed = Math.floor(Math.random() * (50 - 30 + 1)) + 30;
+					enemySpeed = Math.floor(Math.random() * (60 - 40 + 1)) + 40;
 					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
 					enemiesToSpawn = Math.floor(Math.random() * 4) + 1;
 				} else if (points >= 40) {
-					enemySpeed = Math.floor(Math.random() * (50 - 30 + 1)) + 30;
+					enemySpeed = Math.floor(Math.random() * (60 - 40 + 1)) + 40;
 					enemiesToSpawn = Math.floor(Math.random() * 3) + 1;
 					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
 				} else if (points >= 30) {
 					enemiesToSpawn = Math.floor(Math.random() * 3) + 1;
-					enemySpeed = Math.floor(Math.random() * (40 - 30 + 1)) + 30;
+					enemySpeed = Math.floor(Math.random() * (50 - 40 + 1)) + 40;
 					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
 				} else if (points >= 20) {
-					enemySpeed = Math.floor(Math.random() * (40 - 30 + 1)) + 30;
+					enemySpeed = Math.floor(Math.random() * (50 - 30 + 1)) + 30;
 					enemiesToSpawn = Math.floor(Math.random() * 2) + 1;
 				} else if (points >= 10) {
 					enemiesToSpawn = Math.floor(Math.random() * 2) + 1;
-					enemySpeed = Math.floor(Math.random() * (40 - 20 + 1)) + 20;
+					enemySpeed = Math.floor(Math.random() * (40 - 30 + 1)) + 30;
 				} else if (points >= 5) {
 					enemySpeed = Math.floor(Math.random() * (40 - 20 + 1)) + 20;
 				}
@@ -193,12 +246,11 @@ function update (deltaTime) {
 
 			if(checkHit(enemy, ship)){
 				gameOver = true;
-				ship.y = 451;
 			}
 		}
 
 		else{
-			if(enemy.y >= 400){
+			if(enemy.y >= (canvas.height - 30)){
 				gameOver = true;
 			}
 		}
@@ -217,6 +269,20 @@ function update (deltaTime) {
 		ship.shootEnabled = true;
 	}
 
+}
+
+//Spelloopen
+function gameLoop() {
+	let now = Date.now();
+	let delta = now - then;
+
+	update(delta/1000);
+	render();
+
+	then = now;
+	
+	// Bytt till requestAnimFrame istället för setInterval
+	requestAnimationFrame(gameLoop);
 }
 
 function spawnEnemies(count) {
@@ -244,7 +310,7 @@ function spawnEnemies(count) {
 function fire(){
 	if(ship.shootEnabled){
 		shot.x = ship.x + ship.img.width/2 - shot.img.width/2;
-		shot.y = 400;
+		shot.y = ship.y;
 		ship.shootEnabled = false;
 		shot.action = true;
 		shotSound.load();
