@@ -13,9 +13,6 @@ let shotSound = new Audio('sound/fire.mp3');
 let keysDown = {};
 
 let canvas;
-/**
- * @type {CanvasRenderingContext2D}
- */
 let ctx;
 
 let ship, shot;
@@ -25,10 +22,10 @@ let gameOver = false;
 
 let then;
 
-let points = 0;
-let enemySpeed = 20;
-let enemiesToSpawn = 1
-let spawnCooldown = 5000;
+let points;
+let enemySpeed;
+let enemiesToSpawn;
+let spawnCooldown;
 let lastSpawnTime = 0;
 
 let gameState = "menu";
@@ -66,23 +63,29 @@ function render() {
     } else if (gameState === "gameOver") {
         renderGameOver();
     }
+	else if(gameState == "score"){
+		renderScore();
+	}
 
 	ctx.restore();
 }
 
 function renderMenu() {
     ctx.fillStyle = "white";
-    ctx.font = "24px Arial";
+    ctx.font = "36px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("Space Shooter", canvas.width / 2, 100);
+    ctx.fillText("Space Shooter", canvas.width / 2, 150);
+
+	ctx.font = "24px monospace";
     ctx.fillText("Start Game", canvas.width / 2, 250);
-    ctx.fillText("Help", canvas.width / 2, 300);
-    ctx.fillText("Exit", canvas.width / 2, 350);
+	ctx.fillText("Highest Score", canvas.width/2, 300);
+    ctx.fillText("Help", canvas.width / 2, 350);
+    ctx.fillText("Exit", canvas.width / 2, 400);
 }
 
 function renderHelp() {
     ctx.fillStyle = "white";
-    ctx.font = "18px Arial";
+    ctx.font = "18px monospace";
     ctx.textAlign = "center";
     ctx.fillText("Use arrow keys to move and space to shoot.", canvas.width / 2, 150);
     ctx.fillText("Avoid enemies and shoot them down.", canvas.width / 2, 200);
@@ -90,8 +93,6 @@ function renderHelp() {
 }
 
 function renderGame() {
-
-
     ctx.drawImage(ship.img, ship.x, ship.y);
 
     if (shot.action) {
@@ -104,20 +105,29 @@ function renderGame() {
         }
     }
 
-    ctx.fillStyle = "yellow";
-    ctx.font = "14px Arial";
+    ctx.fillStyle = "white";
+    ctx.font = "14px monospace";
     ctx.textAlign = "left";
-    ctx.fillText("Enemy Down: " + points, 12, 15);
+    ctx.fillText("Enemy Down: " + points, 12, 20);
 }
 
 function renderGameOver() {
     ctx.fillStyle = "white";
-    ctx.font = "28px Arial";
+    ctx.font = "28px monospace";
     ctx.textAlign = "center";
     ctx.fillText("Game Over", canvas.width / 2, 100);
     ctx.fillText("Your score: " + points, canvas.width / 2, 150);
     ctx.fillText("Play Again", canvas.width / 2, 300);
     ctx.fillText("Back to Main Menu", canvas.width / 2, 350);
+}
+
+function renderScore() {
+    ctx.fillStyle = "white";
+    ctx.font = "18px monospace";
+    ctx.textAlign = "center";
+    const highestScore = localStorage.getItem("highestScore") || 0;
+    ctx.fillText("Your highest score is: " + highestScore, canvas.width / 2, 200);
+    ctx.fillText("Click to return to menu.", canvas.width / 2, 250);
 }
 
 // Hanterar menyval baserat på klick
@@ -130,10 +140,12 @@ function handleMenuClick(event) {
         if (y > 230 && y < 270) {
             startGame();
         } else if (y > 270 && y < 330) {
-            gameState = "help";
+            gameState = "score"
         } else if (y > 330 && y < 370) {
-            window.close();
-        }
+            gameState = "help";
+        } else if (y > 370 && y < 430){
+			window.close();
+		}
     } else if (gameState === "help") {
         gameState = "menu";
     } else if (gameState === "gameOver") {
@@ -141,7 +153,9 @@ function handleMenuClick(event) {
             startGame();
         } else if (y > 330 && y < 370) {
             gameState = "menu";
-        }
+        } 
+    } else if (gameState === "score") {
+	    gameState = "menu";
     }
 }
 
@@ -150,12 +164,12 @@ function startGame() {
     gameState = "playing";
     points = 0;
     gameOver = false;
-	enemySpeed = 20;
-	enemiesToSpawn = 1;
-	spawnCooldown = 5000;
-	ship = new Ship(canvas.width/2, (canvas.height - 30), shipImg, 500);
-	shot = new Shot(ship.x + ship.img.width/2, 400, shotImg, 300);
-	enemyArray = []; 
+    enemySpeed = 20;
+    enemiesToSpawn = 1;
+    spawnCooldown = 5000;
+    ship = new Ship(canvas.width / 2, canvas.height - 50, shipImg, 500);
+    shot = new Shot(ship.x + ship.img.width / 2, 400, shotImg, 600);
+    enemyArray = [];
     lastSpawnTime = Date.now();
 }
 
@@ -165,6 +179,7 @@ function update (deltaTime) {
 	if (gameState !== "playing") return;
 
     if (gameOver) {
+		saveHighestScore();
         gameState = "gameOver";
         return;
     }
@@ -199,7 +214,7 @@ function update (deltaTime) {
 
 	for(let i = 0; i < enemyArray.length; i++){
 		let enemy = enemyArray[i];
-		if(enemy.alive && enemy.y < (canvas.height - 30)){
+		if(enemy.alive && enemy.y < (canvas.height - 50)){
 			enemy.y += enemy.speed * deltaTime;
 
 			if(shot.action && checkHit(enemy, shot)){
@@ -211,7 +226,7 @@ function update (deltaTime) {
 
 				//Svårighetsgraden ökar ju mer poäng man får
 				if (points >= 100) {
-					enemySpeed = Math.floor(Math.random() * (70 - 50 + 1)) + 40;
+					enemySpeed = Math.floor(Math.random() * (70 - 50 + 1)) + 50;
 					enemiesToSpawn = Math.floor(Math.random() * 5) + 1;
 					spawnCooldown = 3000;
 				} else if (points >= 70) {
@@ -250,7 +265,7 @@ function update (deltaTime) {
 		}
 
 		else{
-			if(enemy.y >= (canvas.height - 30)){
+			if(enemy.y >= (canvas.height - 50)){
 				gameOver = true;
 			}
 		}
@@ -283,6 +298,13 @@ function gameLoop() {
 	
 	// Bytt till requestAnimFrame istället för setInterval
 	requestAnimationFrame(gameLoop);
+}
+
+function saveHighestScore() {
+    const highestScore = localStorage.getItem("highestScore") || 0;
+    if (points > highestScore) {
+        localStorage.setItem("highestScore", points);
+    }
 }
 
 function spawnEnemies(count) {

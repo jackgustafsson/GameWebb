@@ -1,10 +1,10 @@
 body{
-	background-color: grey;
+	background-color: rgb(29, 28, 28);
 
 }
 canvas#spaceCanvas{
 	background-color: black;
-	border: solid green;
+	border: 0.1rem solid green;
 	margin-left: 350px;
-	margin-top: 100px;
+	margin-top: 150px;
 }
