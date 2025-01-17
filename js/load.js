@@ -1,4 +1,3 @@
-//Läser in bilderna på figurerna
 let shipImg = new Image();
 let enemyImg = new Image();
 let shotImg = new Image();
@@ -7,8 +6,7 @@ shipImg.src = "img/ship.gif";
 enemyImg.src = "img/alien.gif";
 shotImg.src = "img/shot.gif";
 
-//Ljud för skott
-let shotSound = new Audio('sound/fire.mp3');
+let shotSound;
 
 let keysDown = {};
 
@@ -30,29 +28,26 @@ let lastSpawnTime = 0;
 
 let gameState = "menu";
 
-// Initierar spelet, anropas vid onload
 function init(){
-	
 	document.addEventListener("keydown", keyDown);
 	document.addEventListener("keyup", keyUp);
-
 	canvas = document.getElementById('spaceCanvas');
 	ctx = canvas.getContext('2d');
 
 	canvas.addEventListener("click", handleMenuClick);
 
-	then = Date.now();
+	shotSound = new Audio('sound/fire.mp3');
 
+	then = Date.now();
 	gameLoop();
-	
 } 
 
-//  Ritar om canvas
 function render() {
-	
 	ctx.save();
 	ctx.fillStyle = "black";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = "white";
+	ctx.textAlign = "center";
 
 	if (gameState === "menu") {
         renderMenu();
@@ -62,8 +57,7 @@ function render() {
         renderGame();
     } else if (gameState === "gameOver") {
         renderGameOver();
-    }
-	else if(gameState == "score"){
+    } else if(gameState == "score"){
 		renderScore();
 	}
 
@@ -71,9 +65,7 @@ function render() {
 }
 
 function renderMenu() {
-    ctx.fillStyle = "white";
     ctx.font = "36px monospace";
-    ctx.textAlign = "center";
     ctx.fillText("Space Shooter", canvas.width / 2, 150);
 
 	ctx.font = "24px monospace";
@@ -84,9 +76,7 @@ function renderMenu() {
 }
 
 function renderHelp() {
-    ctx.fillStyle = "white";
     ctx.font = "18px monospace";
-    ctx.textAlign = "center";
     ctx.fillText("Use arrow keys to move and space to shoot.", canvas.width / 2, 150);
     ctx.fillText("Avoid enemies and shoot them down.", canvas.width / 2, 200);
     ctx.fillText("Click to return to menu.", canvas.width / 2, 300);
@@ -105,16 +95,13 @@ function renderGame() {
         }
     }
 
-    ctx.fillStyle = "white";
     ctx.font = "14px monospace";
     ctx.textAlign = "left";
     ctx.fillText("Enemy Down: " + points, 12, 20);
 }
 
 function renderGameOver() {
-    ctx.fillStyle = "white";
     ctx.font = "28px monospace";
-    ctx.textAlign = "center";
     ctx.fillText("Game Over", canvas.width / 2, 100);
     ctx.fillText("Your score: " + points, canvas.width / 2, 150);
     ctx.fillText("Play Again", canvas.width / 2, 300);
@@ -122,15 +109,12 @@ function renderGameOver() {
 }
 
 function renderScore() {
-    ctx.fillStyle = "white";
     ctx.font = "18px monospace";
-    ctx.textAlign = "center";
     const highestScore = localStorage.getItem("highestScore") || 0;
     ctx.fillText("Your highest score is: " + highestScore, canvas.width / 2, 200);
     ctx.fillText("Click to return to menu.", canvas.width / 2, 250);
 }
 
-// Hanterar menyval baserat på klick
 function handleMenuClick(event) {
     let rect = canvas.getBoundingClientRect();
     let x = event.clientX - rect.left;
@@ -159,24 +143,23 @@ function handleMenuClick(event) {
     }
 }
 
-// Startar spelet
 function startGame() {
     gameState = "playing";
     points = 0;
     gameOver = false;
-    enemySpeed = 20;
+
+	enemySpeed = 20;
     enemiesToSpawn = 1;
     spawnCooldown = 5000;
+
     ship = new Ship(canvas.width / 2, canvas.height - 50, shipImg, 500);
     shot = new Shot(ship.x + ship.img.width / 2, 400, shotImg, 600);
     enemyArray = [];
     lastSpawnTime = Date.now();
 }
 
-//Uppdaterar läget på figurernatoch kontrollerar krockar
-
 function update (deltaTime) {
-	if (gameState !== "playing") return;
+	if (gameState !== "playing") return
 
     if (gameOver) {
 		saveHighestScore();
@@ -197,7 +180,6 @@ function update (deltaTime) {
 
 	if(39 in keysDown){ //Höger
 		ship.x += ship.speed * deltaTime;
-
 		if((ship.x + ship.img.width) > canvas.width){
 			ship.x = canvas.width - ship.img.width;
 		}
@@ -205,7 +187,6 @@ function update (deltaTime) {
 
 	if(shot.action){
 		shot.y -= shot.speed * deltaTime;
-
 		if(shot.y < 0){
 			shot.action = false;
 			ship.shootEnabled = true;
@@ -222,9 +203,8 @@ function update (deltaTime) {
 				shot.action = false;
 				shot.y = 0;
 				ship.shootEnabled = true;
-				points++;
+				points++;	
 
-				//Svårighetsgraden ökar ju mer poäng man får
 				if (points >= 100) {
 					enemySpeed = Math.floor(Math.random() * (70 - 50 + 1)) + 50;
 					enemiesToSpawn = Math.floor(Math.random() * 5) + 1;
@@ -263,7 +243,6 @@ function update (deltaTime) {
 				gameOver = true;
 			}
 		}
-
 		else{
 			if(enemy.y >= (canvas.height - 50)){
 				gameOver = true;
@@ -286,17 +265,12 @@ function update (deltaTime) {
 
 }
 
-//Spelloopen
 function gameLoop() {
 	let now = Date.now();
 	let delta = now - then;
-
 	update(delta/1000);
 	render();
-
 	then = now;
-	
-	// Bytt till requestAnimFrame istället för setInterval
 	requestAnimationFrame(gameLoop);
 }
 
@@ -309,26 +283,24 @@ function saveHighestScore() {
 
 function spawnEnemies(count) {
     for (let i = 0; i < count; i++) {
-        let overlap = true;
-        let x, y;
-        let attempts = 0; // Räknar försök för att undvika oändlig loop
+        let attempts = 0;
+        let x, y, overlap;
 
-        while (overlap && attempts < 50) {
+        do {
             x = Math.random() * (canvas.width - 50);
-            y = -50; // Spawnar alltid från toppen
-            overlap = enemyArray.some(enemy => 
+            y = -50; 
+            overlap = enemyArray.some(enemy =>
                 Math.abs(enemy.x - x) < 50 && Math.abs(enemy.y - y) < 50
             );
             attempts++;
-        }
+        } while (overlap && attempts < 20); 
 
-        if (attempts < 50) { // Endast lägg till om en giltig position hittas
+        if (!overlap) {
             enemyArray.push(new Enemy(x, y, enemyImg, enemySpeed));
         }
     }
 }
 
-/**  Avlosssar en missil om möjligt  */
 function fire(){
 	if(ship.shootEnabled){
 		shot.x = ship.x + ship.img.width/2 - shot.img.width/2;
@@ -340,15 +312,7 @@ function fire(){
 	}
 }
 
-/**
- * Kollitionsdetektion mellan fiende och missil
- * 
- * @param enemy		Fiende som skall kollas
- * @param obj		Objekt som kollision skall kollas mot
- * @returns true 	vid krock
- */
 function checkHit(enemy, obj){
-	if (!enemy || !obj) return false; // Kontrollera att objekten är definierade
     return (
         obj.x <= (enemy.x + enemy.img.width) &&
         enemy.x <= (obj.x + obj.img.width) &&
@@ -357,12 +321,10 @@ function checkHit(enemy, obj){
     );
 }
 
-// Sparar undan en tangentryckning för bearbetning 
 function keyDown(e){
 	keysDown[e.keyCode] = true;
 }
 
-//Tar bort händelsen när knappen släpps. 
 function keyUp(e){
 	delete keysDown[e.keyCode];
 }
