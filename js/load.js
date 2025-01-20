@@ -135,6 +135,7 @@ function handleMenuClick(event) {
     } else if (gameState === "gameOver") {
         if (y > 270 && y < 330) {
             startGame();
+			console.clear();
         } else if (y > 330 && y < 370) {
             gameState = "menu";
         } 
@@ -206,27 +207,53 @@ function update (deltaTime) {
 				points++;	
 
 				if (points >= 100) {
-					enemySpeed = Math.floor(Math.random() * (70 - 50 + 1)) + 50;
 					enemiesToSpawn = Math.floor(Math.random() * 5) + 1;
 					spawnCooldown = 3000;
+					if(enemiesToSpawn == 2){
+						enemySpeed = Math.floor(Math.random() * (80 - 50 + 1)) + 50;
+					} else if(enemiesToSpawn == 3){
+						enemySpeed = Math.floor(Math.random() * (60 - 50 + 1)) + 50;
+					} else if(enemiesToSpawn == 4){
+						enemySpeed = 40;
+					} else if(enemiesToSpawn == 5){
+						enemySpeed = 20;
+					} else {
+						enemySpeed = Math.floor(Math.random() * (100 - 50 + 1)) + 50; 
+					}
 				} else if (points >= 70) {
-					enemySpeed = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
 					enemiesToSpawn = Math.floor(Math.random() * 4) + 1;
 					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
+					if(enemiesToSpawn == 3){
+						enemySpeed = Math.floor(Math.random() * (60 - 40 + 1)) + 40;
+					} else if(enemiesToSpawn == 4){
+						enemySpeed = Math.floor(Math.random() * (40 - 30 + 1)) + 30;
+					}else{
+						enemySpeed = Math.floor(Math.random() * (80 - 50 + 1)) + 50;
+					}
 				} else if (points >= 50) {
-					enemySpeed = Math.floor(Math.random() * (60 - 40 + 1)) + 40;
 					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
 					enemiesToSpawn = Math.floor(Math.random() * 4) + 1;
+					if(enemiesToSpawn == 3){
+						enemySpeed = Math.floor(Math.random() * (60 - 30 + 1)) + 30;
+					} else if(enemiesToSpawn == 4){
+						enemySpeed = Math.floor(Math.random() * (40 - 20 + 1)) + 20;
+					}else{
+						enemySpeed = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+					}
 				} else if (points >= 40) {
-					enemySpeed = Math.floor(Math.random() * (60 - 40 + 1)) + 40;
 					enemiesToSpawn = Math.floor(Math.random() * 3) + 1;
 					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
+					if(enemiesToSpawn == 3){
+						enemySpeed = Math.floor(Math.random() * (60 - 30 + 1)) + 30;
+					}else{
+						enemySpeed = Math.floor(Math.random() * (60 - 40 + 1)) + 40;
+					}
 				} else if (points >= 30) {
 					enemiesToSpawn = Math.floor(Math.random() * 3) + 1;
-					enemySpeed = Math.floor(Math.random() * (50 - 40 + 1)) + 40;
+					enemySpeed = Math.floor(Math.random() * (60 - 30 + 1)) + 30;
 					spawnCooldown = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
 				} else if (points >= 20) {
-					enemySpeed = Math.floor(Math.random() * (50 - 30 + 1)) + 30;
+					enemySpeed = Math.floor(Math.random() * (60 - 30 + 1)) + 30;
 					enemiesToSpawn = Math.floor(Math.random() * 2) + 1;
 				} else if (points >= 10) {
 					enemiesToSpawn = Math.floor(Math.random() * 2) + 1;
