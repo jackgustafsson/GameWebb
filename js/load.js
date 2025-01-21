@@ -1,47 +1,51 @@
+//Variabler för bilder
 let shipImg = new Image();
 let enemyImg = new Image();
 let shotImg = new Image();
 
-shipImg.src = "img/ship.gif";
-enemyImg.src = "img/alien.gif";
-shotImg.src = "img/shot.gif";
+shipImg.src = "img/ship.gif";  //rymdskeppet
+enemyImg.src = "img/alien.gif"; //fiende
+shotImg.src = "img/shot.gif";   //skott
 
-let shotSound;
+let shotSound;  //variabel för ljudet
 
-let keysDown = {};
+let keysDown = {};   //Håller koll på vilka tangenter som är nedtryckta
 
+//Variabler för att rita på spelplanen
 let canvas;
 let ctx;
 
-let ship, shot;
-let enemyArray;
+let ship, shot;   //Objekt för spelarens skepp och skott
+let enemyArray;   //Objekt för aktiva fiender
 
 let gameOver = false;
-
 let then;
 
-let points;
-let enemySpeed;
-let enemiesToSpawn;
+let points;  //Antal poäng spelaren har 
+let enemySpeed;    //Fiendernas hastighet
+let enemiesToSpawn;   //Antal fiender som ska spawnas
 let spawnCooldown;
 let lastSpawnTime = 0;
-
-let gameState = "menu";
+let gameState = "menu";  //Hanterar vilket tillstånd spelet är i, i det här fallet börjar spelet med en meny
 
 function init(){
+	//Lyssnar på tangenttryckningar
 	document.addEventListener("keydown", keyDown);
 	document.addEventListener("keyup", keyUp);
+
+	//Sätter upp canvas för rendering
 	canvas = document.getElementById('spaceCanvas');
 	ctx = canvas.getContext('2d');
 
-	canvas.addEventListener("click", handleMenuClick);
+	canvas.addEventListener("click", handleMenuClick); //Lyssnar på musklick
 
-	shotSound = new Audio('sound/fire.mp3');
+	shotSound = new Audio('sound/fire.mp3');  //Laddar ljudfilen för skottet
 
 	then = Date.now();
 	gameLoop();
 } 
 
+//Fyller bakgrunden med svart och ritar vit text för menyer och information
 function render() {
 	ctx.save();
 	ctx.fillStyle = "black";
@@ -49,6 +53,7 @@ function render() {
 	ctx.fillStyle = "white";
 	ctx.textAlign = "center";
 
+	//Kallar på specifika renderingsfunktioner beroende på spelets tillstånd
 	if (gameState === "menu") {
         renderMenu();
     } else if (gameState === "help") {
@@ -64,6 +69,7 @@ function render() {
 	ctx.restore();
 }
 
+//Ritar huvudmenyn
 function renderMenu() {
     ctx.font = "36px monospace";
     ctx.fillText("Space Shooter", canvas.width / 2, 150);
@@ -75,6 +81,7 @@ function renderMenu() {
     ctx.fillText("Exit", canvas.width / 2, 400);
 }
 
+//Visar hjälptext
 function renderHelp() {
     ctx.font = "18px monospace";
     ctx.fillText("Use arrow keys to move and space to shoot.", canvas.width / 2, 150);
@@ -82,6 +89,7 @@ function renderHelp() {
     ctx.fillText("Click to return to menu.", canvas.width / 2, 300);
 }
 
+//Renderar spelarens skepp, aktiva fiender och skott
 function renderGame() {
     ctx.drawImage(ship.img, ship.x, ship.y);
 
@@ -100,6 +108,7 @@ function renderGame() {
     ctx.fillText("Enemy Down: " + points, 12, 20);
 }
 
+//Visar "Game Over"-skärm med poäng och val
 function renderGameOver() {
     ctx.font = "28px monospace";
     ctx.fillText("Game Over", canvas.width / 2, 100);
@@ -108,6 +117,7 @@ function renderGameOver() {
     ctx.fillText("Back to Main Menu", canvas.width / 2, 350);
 }
 
+//Visar högsta poängen från localStorage
 function renderScore() {
     ctx.font = "18px monospace";
     const highestScore = localStorage.getItem("highestScore") || 0;
@@ -115,28 +125,30 @@ function renderScore() {
     ctx.fillText("Click to return to menu.", canvas.width / 2, 250);
 }
 
+//Använder musens position för att bestämma vilken knapp som klickades
 function handleMenuClick(event) {
     let rect = canvas.getBoundingClientRect();
     let x = event.clientX - rect.left;
     let y = event.clientY - rect.top;
 
+	//Byter till rätt tillstånd baserat på klick
     if (gameState === "menu") {
-        if (y > 230 && y < 270) {
+        if (y > 230 && y < 270 && x > 530 && x < 670) {
             startGame();
-        } else if (y > 270 && y < 330) {
+        } else if (y > 270 && y < 330 && x > 510 && x < 690) {
             gameState = "score"
-        } else if (y > 330 && y < 370) {
+        } else if (y > 330 && y < 370 && x > 570 && x < 630) {
             gameState = "help";
-        } else if (y > 370 && y < 430){
+        } else if (y > 370 && y < 430 && x > 570 && x < 630){
 			window.close();
 		}
     } else if (gameState === "help") {
         gameState = "menu";
     } else if (gameState === "gameOver") {
-        if (y > 270 && y < 330) {
+        if (y > 270 && y < 330 && x > 520 && x < 680) {
             startGame();
 			console.clear();
-        } else if (y > 330 && y < 370) {
+        } else if (y > 330 && y < 370 && x > 470 && x < 730) {
             gameState = "menu";
         } 
     } else if (gameState === "score") {
@@ -144,6 +156,8 @@ function handleMenuClick(event) {
     }
 }
 
+/*Startvärden; återställer poäng, fiender och skeppets position
+Fienderparametrar; bestämmer startantal och hastighet på fiender*/
 function startGame() {
     gameState = "playing";
     points = 0;
@@ -159,6 +173,9 @@ function startGame() {
     lastSpawnTime = Date.now();
 }
 
+/*Uppdaterar spelarens position och skott baserat på tangenttryckningar
+Kollar om skott träffar fienden, om spelaren träffas eller om fienden når botten
+Ökar antalet fiender och deras hastighet baserat på poäng*/
 function update (deltaTime) {
 	if (gameState !== "playing") return
 
@@ -292,13 +309,14 @@ function update (deltaTime) {
 
 }
 
+//Deltatid är tidsskillnaden för att säkerställa jämn rörelse
 function gameLoop() {
 	let now = Date.now();
 	let delta = now - then;
 	update(delta/1000);
 	render();
 	then = now;
-	requestAnimationFrame(gameLoop);
+	requestAnimationFrame(gameLoop);  //Uppdaterar spelet kontinuerligt
 }
 
 function saveHighestScore() {
@@ -308,6 +326,7 @@ function saveHighestScore() {
     }
 }
 
+//Spawnar fiender på slumpmässiga platser och undviker överlappning
 function spawnEnemies(count) {
     for (let i = 0; i < count; i++) {
         let attempts = 0;
